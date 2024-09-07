@@ -1,26 +1,4 @@
-// import { Body, Controller, Post } from '@nestjs/common';
-// import { UserService } from './user.service';
-// import { ApiTags } from '@nestjs/swagger';
-// import { CreateUserDto } from './dto/create-user.dto';
-// @ApiTags('Users')
-// @Controller('users')
-// export class UserController {
-//   constructor(private userService: UserService) {}
-
-//   @Post()
-//   createUser(@Body() requestBody: CreateUserDto) {
-//     return this.userService.create(requestBody);
-//   }
-
-//   @Post('register')
-//   registerUser(@Body() requestBody: CreateUserDto) {
-//     return this.userService.register(requestBody);
-//   }
-
-  
-// }
-
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, HttpException, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -37,12 +15,27 @@ export class UserController {
   }
 
   @Post('register')
-  registerUser(@Body() requestBody: CreateUserDto) {
-    return this.userService.register(requestBody);
+  async registerUser(@Body() requestBody: CreateUserDto) {
+    try {
+      return await this.userService.register(requestBody);
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Registration failed', error: error.message },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   @Post('login')
-  loginUser(@Body() requestBody: LoginUserDto) {
-    return this.userService.login(requestBody.email, requestBody.password);
+  async loginUser(@Body() requestBody: LoginUserDto) {
+    try {
+      const { email, password } = requestBody;
+      return await this.userService.login(email, password);
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Login failed', error: error.message },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
   }
 }
