@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { access } from 'fs';
 
 @Injectable()
 export class UserService {
@@ -19,15 +20,33 @@ export class UserService {
   }
 
   async register(requestBody: CreateUserDto) {
+    // Check if email already exists
     const check = await this.userRepo.findOneBy({ email: requestBody.email });
     if (check != null) {
-      return 'Email already existed';
+      return { message: 'Email already exists' };
     }
+
+
     const hashedPassword = await bcrypt.hash(requestBody.password, 10);
     requestBody.password = hashedPassword;
 
-    const user = await this.userRepo.create(requestBody);
-    return await this.userRepo.save(user);
+    const user = this.userRepo.create(requestBody);
+    await this.userRepo.save(user);
+
+    const payload1 = { username: user.username, sub: user.id };
+    const accessToken2 = this.jwtService.sign(payload1, {
+      secret: process.env.JWT_SECRET,
+    });
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        password: user.password
+        // Add other user fields if necessary
+      },
+      accessToken2,
+    };
   }
 
   //   const checkUsername = requestBody.username;
