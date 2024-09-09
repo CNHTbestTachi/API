@@ -23,7 +23,13 @@ export class UserService {
     if (check != null) {
       return 'Email already existed';
     }
+    const hashedPassword = await bcrypt.hash(requestBody.password, 10);
+    requestBody.password = hashedPassword;
+
+    const user = await this.userRepo.create(requestBody);
+    return await this.userRepo.save(user);
   }
+
   //   const checkUsername = requestBody.username;
 
   //   // Kiểm tra nếu username là undefined hoặc null
